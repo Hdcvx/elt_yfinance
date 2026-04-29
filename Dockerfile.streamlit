@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir \
+    "streamlit>=1.40.0" \
+    "plotly>=5.0.0" \
+    "psycopg2-binary>=2.9.12" \
+    "pandas>=2.0.0"
+
+COPY src/dashboard.py /app/dashboard.py
+COPY .streamlit /app/.streamlit
+
+EXPOSE 8501
+
+CMD ["streamlit", "run", "dashboard.py", \
+     "--server.port=8501", \
+     "--server.address=0.0.0.0", \
+     "--server.headless=true"]

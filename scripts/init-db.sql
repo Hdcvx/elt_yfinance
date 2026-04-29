@@ -1,0 +1,7 @@
+CREATE SCHEMA IF NOT EXISTS bronze;
+CREATE SCHEMA IF NOT EXISTS silver;
+CREATE SCHEMA IF NOT EXISTS gold;
+
+GRANT ALL ON SCHEMA bronze TO dados_user;
+GRANT ALL ON SCHEMA silver TO dados_user;
+GRANT ALL ON SCHEMA gold TO dados_user;

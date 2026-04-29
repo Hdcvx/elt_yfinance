@@ -1,0 +1,121 @@
+services:
+
+  postgres-airflow:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_airflow_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+
+  postgres-dados:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dados_user
+      POSTGRES_PASSWORD: dados_pass
+      POSTGRES_DB: data_warehouse
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dados_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "dados_user", "-d", "data_warehouse"]
+      interval: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres-dados
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    ports:
+      - "8501:8501"
+    environment:
+      POSTGRES_HOST: postgres-dados
+    depends_on:
+      postgres-dados:
+        condition: service_healthy
+
+  airflow-webserver:
+    build: .
+    depends_on:
+      postgres-airflow:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__API__SECRET_KEY: &secret_key "elt-yfinance-dev-secret-key-mude-em-producao-64bytes-ok"
+      AIRFLOW__API_AUTH__JWT_SECRET: &jwt_secret "elt-yfinance-jwt-secret-compartilhado-entre-todos-servicos"
+      AIRFLOW__SIMPLE_AUTH_MANAGER__USERS: '[{"username": "admin", "password": "admin", "role": "admin"}]'
+      POSTGRES_HOST: postgres-dados
+    volumes:
+      - airflow_home:/opt/airflow
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./dbt:/opt/airflow/dbt
+      - ./logs:/opt/airflow/logs
+    ports:
+      - "8080:8080"
+    command: >
+      bash -c "airflow db migrate && airflow api-server"
+
+  airflow-dag-processor:
+    build: .
+    depends_on:
+      postgres-airflow:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-webserver:8080/execution/
+      AIRFLOW__API__SECRET_KEY: *secret_key
+      AIRFLOW__API_AUTH__JWT_SECRET: *jwt_secret
+      POSTGRES_HOST: postgres-dados
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./dbt:/opt/airflow/dbt
+      - ./logs:/opt/airflow/logs
+    command: airflow dag-processor
+
+  airflow-scheduler:
+    build: .
+    depends_on:
+      postgres-airflow:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-webserver:8080/execution/
+      AIRFLOW__API__SECRET_KEY: *secret_key
+      AIRFLOW__API_AUTH__JWT_SECRET: *jwt_secret
+      POSTGRES_HOST: postgres-dados
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./dbt:/opt/airflow/dbt
+      - ./logs:/opt/airflow/logs
+    command: airflow scheduler
+
+volumes:
+  postgres_airflow_data:
+  postgres_dados_data:
+  airflow_home:
