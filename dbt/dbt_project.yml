@@ -1,0 +1,22 @@
+name: pipeline_financeiro
+version: "1.0.0"
+profile: pipeline_financeiro
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+
+models:
+  pipeline_financeiro:
+    bronze:
+      +schema: bronze
+      +materialized: view
+
+    silver:
+      +schema: silver
+      +materialized: table
+
+    gold:
+      +schema: gold
+      +materialized: table

@@ -1,0 +1,12 @@
+pipeline_financeiro:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DBT_POSTGRES_HOST', 'postgres-dados') }}"
+      port: 5432
+      dbname: data_warehouse
+      user: dados_user
+      password: dados_pass
+      schema: bronze
+      threads: 4
