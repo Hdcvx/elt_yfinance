@@ -48,33 +48,33 @@ This project implements a production-ready ELT pipeline for B3 equity data, cove
 ## Architecture
 
 ```
-┌──────────────┐
-│  yFinance    │  OHLCV data — 16 B3 tickers
-│  (Yahoo API) │
-└──────┬───────┘
-       │  bronze.py
-       ▼
-┌─────────────────────────────────────────────────────┐
-│                    PostgreSQL 16                      │
-│                                                       │
-│  bronze.precos          ← raw table (upsert)          │
-│       │                                               │
-│  [dbt run]                                            │
-│       │                                               │
-│  bronze.stg_precos      ← view  (clean + cast)        │
-│       │                                               │
-│  silver.fct_precos_diarios  ← table (keyed + dated)   │
-│       │                                               │
-│  gold.metricas_ativos   ← table (returns + MAs)       │
-└──────────────────────┬──────────────────────────────┘
-                       │
-          ┌────────────┴────────────┐
-          ▼                         ▼
-   ┌─────────────┐          ┌──────────────┐
-   │  Streamlit  │          │  Claude API  │
-   │  Dashboard  │          │  (ia_layer)  │
-   │  :8501      │          │  (optional)  │
-   └─────────────┘          └──────────────┘
+                     ┌──────────────┐
+                     │  yFinance    │  OHLCV data — 16 B3 tickers
+                     │  (Yahoo API) │
+                     └──────┬───────┘
+                            │  bronze.py
+                            ▼
+   ┌─────────────────────────────────────────────────────┐
+   │                    PostgreSQL 16                    │
+   │                                                     │
+   │  bronze.precos                 ← raw table (upsert) │
+   │       │                                             │
+   │  [dbt run]                                          │
+   │       │                                             │
+   │  bronze.stg_precos           ← view  (clean + cast) │
+   │       │                                             │
+   │  silver.fct_precos_diarios  ← table (keyed + dated) │
+   │       │                                             │
+   │  gold.metricas_ativos       ← table (returns + MAs) │
+   └──────────────────────┬──────────────────────────────┘
+                          │
+             ┌────────────┴────────────┐
+             ▼                         ▼
+       ┌─────────────┐          ┌──────────────┐
+       │  Streamlit  │          │  Claude API  │
+       │  Dashboard  │          │  (ia_layer)  │
+       │  :8501      │          │  (optional)  │
+       └─────────────┘          └──────────────┘
 
 Orchestration: Apache Airflow 3.2.1 (runs every step above)
 ```
