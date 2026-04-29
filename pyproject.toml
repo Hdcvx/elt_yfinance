@@ -1,0 +1,15 @@
+[project]
+name = "elt-yfinance"
+version = "1.0.0"
+requires-python = ">=3.11"
+
+dependencies = [
+    "apache-airflow>=3.2.1",
+    "dbt-core>=1.11.8",
+    "dbt-postgres>=1.10.0",
+    "loguru>=0.7.3",
+    "plotly>=5.0.0",
+    "psycopg2-binary>=2.9.12",
+    "streamlit>=1.40.0",
+    "yfinance>=1.3.0",
+]

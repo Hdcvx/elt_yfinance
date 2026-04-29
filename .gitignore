@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv/
+
+# Data (gerado em runtime)
+data/
+logs/
+
+# dbt artifacts
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+dbt/.user.yml
+
+# macOS
+.DS_Store
+
+# Secrets / env
+.env
+*.env
+
+# IDE
+.idea/
+.vscode/
+
+# Claude Code
+.claude/
